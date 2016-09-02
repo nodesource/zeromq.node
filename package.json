@@ -20,6 +20,7 @@
     "node": ">=0.8"
   },
   "scripts": {
+    "preinstall": "./preinstall.sh",
     "test": "mocha --expose-gc --slow 2000 --timeout 600000"
   },
   "keywords": ["zeromq", "zmq", "0mq", "ømq", "libzmq", "native", "binding", "addon"],

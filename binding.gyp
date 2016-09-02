@@ -7,11 +7,13 @@
       'cflags_cc!': ['-fno-exceptions'],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")",
-        './../zmq/include/'
+        'deps/zmq/include/'
       ],
       'dependencies': [
-        './../zmq/zmq.gyp:libzmq'
+        '<(module_root_dir)/deps/zmq/binding.gyp:libzmq'
       ]
+      # dir relative to ./build dir
+# "libraries": [ '<(module_root_dir)/deps/zmq/build/Release/zmq.a' ]
     }
   ]
 }
