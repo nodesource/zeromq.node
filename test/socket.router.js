@@ -21,6 +21,7 @@ describe('socket.router', function(){
     var errMsgs = require('os').platform() === 'win32' ? ['Unknown error'] : [];
     errMsgs.push('No route to host');
     errMsgs.push('Resource temporarily unavailable');
+    errMsgs.push('Host unreachable');
 
     function assertRouteError(err) {
       if (errMsgs.indexOf(err.message) === -1) {
