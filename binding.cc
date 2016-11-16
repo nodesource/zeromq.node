@@ -162,6 +162,7 @@ namespace zmq {
       static NAN_METHOD(Sendv);
       void Close();
       static NAN_METHOD(Close);
+      static NAN_METHOD(GetException);
 
       Nan::Persistent<Object> context_;
       void *socket_;
@@ -330,6 +331,7 @@ namespace zmq {
     Nan::SetPrototypeMethod(t, "send", Send);
     Nan::SetPrototypeMethod(t, "sendv", Sendv);
     Nan::SetPrototypeMethod(t, "close", Close);
+    Nan::SetPrototypeMethod(t, "getException", GetException);
 
 #if ZMQ_CAN_DISCONNECT
     Nan::SetPrototypeMethod(t, "disconnect", Disconnect);
@@ -1423,6 +1425,10 @@ namespace zmq {
     GET_SOCKET(info);
     socket->Close();
     return;
+  }
+
+  NAN_METHOD(Socket::GetException) {
+    info.GetReturnValue().Set(ExceptionFromError());
   }
 
   // Make zeromq versions less than 2.1.3 work by defining
