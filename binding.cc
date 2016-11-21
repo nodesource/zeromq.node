@@ -441,12 +441,22 @@ namespace zmq {
       return;
     }
 
-    Local<Value> argv[3];
+    Local<Value> argv[4];
     argv[0] = Nan::New<Integer>(event_id);
     argv[1] = Nan::New<Integer>(event_value);
     argv[2] = Nan::New<String>(event_endpoint).ToLocalChecked();
+    switch (event_id) {
+      case ZMQ_EVENT_BIND_FAILED:
+      case ZMQ_EVENT_ACCEPT_FAILED:
+      case ZMQ_EVENT_CLOSE_FAILED:
+        argv[3] = ExceptionFromError();
+        break;
+      default:
+        argv[3] = Nan::Undefined();
+        break;
+    }
 
-    Nan::MakeCallback(this->handle(), callback_v.As<Function>(), 3, argv);
+    Nan::MakeCallback(this->handle(), callback_v.As<Function>(), 4, argv);
   }
 
   void
@@ -1533,7 +1543,9 @@ namespace zmq {
     opts_binary.insert(48); // ZMQ_CURVE_PUBLICKEY
     opts_binary.insert(49); // ZMQ_CURVE_SECRETKEY
     opts_binary.insert(50); // ZMQ_CURVE_SERVERKEY
+    opts_int.insert(51); //ZMQ_PROBE_ROUTER
     opts_binary.insert(55); // ZMQ_ZAP_DOMAIN
+    opts_int.insert(66); //ZMQ_HANDSHAKE_IVL
     #endif
 
     NODE_DEFINE_CONSTANT(target, ZMQ_CAN_DISCONNECT);

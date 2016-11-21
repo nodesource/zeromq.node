@@ -10,8 +10,7 @@ describe('socket.monitor', function() {
 
   it('should be able to monitor the socket', function(done) {
     var rep = zmq.socket('rep')
-      , req = zmq.socket('req')
-      , events = [];
+      , req = zmq.socket('req');
 
     rep.on('message', function(msg){
       msg.should.be.an.instanceof(Buffer);
@@ -25,14 +24,10 @@ describe('socket.monitor', function() {
         // Test the endpoint addr arg
         event_endpoint_addr.toString().should.equal('tcp://127.0.0.1:5423');
 
-        // If this is a disconnect event we can now close the rep socket
-        if (e === 'disconnect') {
-          rep.close();
-        }
-
         testedEvents.pop();
         if (testedEvents.length === 0) {
           rep.unmonitor();
+          rep.close();
           done();
         }
       });
@@ -52,6 +47,17 @@ describe('socket.monitor', function() {
         msg.should.be.an.instanceof(Buffer);
         msg.toString().should.equal('world');
         req.close();
+      });
+
+      // Test that bind errors pass an Error both to the callback
+      // and to the monitor event
+      var doubleRep = zmq.socket('rep');
+      doubleRep.monitor();
+      doubleRep.on('bind_error', function (errno, bindAddr, ex) {
+        (ex instanceof Error).should.equal(true);
+      });
+      doubleRep.bind('tcp://127.0.0.1:5423', function (error) {
+        (error instanceof Error).should.equal(true);
       });
     });
   });
