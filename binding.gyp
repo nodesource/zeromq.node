@@ -3,6 +3,7 @@
     {
       'target_name': 'zmq',
       'sources': [ 'binding.cc' ],
+      'defines': [ 'ZMQ_BUILD_DRAFT_API=1' ],
       'include_dirs' : [
         "<!(node -e \"require('nan')\")"
       ],
