@@ -108,7 +108,7 @@ namespace zmq {
       void CallbackIfReady();
 
 #if ZMQ_CAN_MONITOR
-      void MonitorEvent(uint16_t event_id, int32_t event_value, char *endpoint);
+      void MonitorEvent(uint16_t event_id, int32_t event_value, char *endpoint, char *remote_endpoint);
       void MonitorError(const char *error_msg);
 #endif
 
@@ -433,7 +433,7 @@ namespace zmq {
 
 #if ZMQ_CAN_MONITOR
   void
-  Socket::MonitorEvent(uint16_t event_id, int32_t event_value, char *event_endpoint) {
+  Socket::MonitorEvent(uint16_t event_id, int32_t event_value, char *event_endpoint, char *remote_endpoint) {
     Nan::HandleScope scope;
 
     Local<Value> callback_v = Nan::Get(this->handle(), Nan::New(monitor_symbol)).ToLocalChecked();
@@ -441,7 +441,7 @@ namespace zmq {
       return;
     }
 
-    Local<Value> argv[4];
+    Local<Value> argv[5];
     argv[0] = Nan::New<Integer>(event_id);
     argv[1] = Nan::New<Integer>(event_value);
     argv[2] = Nan::New<String>(event_endpoint).ToLocalChecked();
@@ -455,8 +455,9 @@ namespace zmq {
         argv[3] = Nan::Undefined();
         break;
     }
+    argv[4] = Nan::New<String>(remote_endpoint).ToLocalChecked();
 
-    Nan::MakeCallback(this->handle(), callback_v.As<Function>(), 4, argv);
+    Nan::MakeCallback(this->handle(), callback_v.As<Function>(), 5, argv);
   }
 
   void
@@ -493,6 +494,7 @@ namespace zmq {
       zmq_msg_init (&msg1);
       if (zmq_recvmsg (s->monitor_socket_, &msg1, ZMQ_DONTWAIT) > 0) {
         char event_endpoint[1025];
+        char event_remote_endpoint[1025];
         uint16_t event_id;
         int32_t event_value;
 
@@ -520,6 +522,28 @@ namespace zmq {
 
         // null terminate our string
         event_endpoint[len]=0;
+
+        if (zmq_msg_more(&msg2)) {
+          zmq_msg_t msg3; /* nsolid extension: remote_addr_ */
+          // get our next frame it may have the remote address and safely copy to our buffer
+          zmq_msg_init (&msg3);
+          if (zmq_recvmsg (s->monitor_socket_, &msg3, 0) == -1) {
+            error = ErrorMessage();
+            zmq_msg_close(&msg3);
+            break;
+          }
+          // protect from overflow
+          len = zmq_msg_size(&msg3);
+          // MIN message size and buffer size with null padding
+          len = len < sizeof(event_remote_endpoint) - 1 ? len : sizeof(event_remote_endpoint) - 1;
+          memcpy(event_remote_endpoint, zmq_msg_data(&msg3), len);
+          // null terminate our string
+          event_remote_endpoint[len] = 0;
+          zmq_msg_close(&msg3);
+        } else {
+          event_remote_endpoint[0] = 0;
+        }
+
 #else
         // monitoring on zmq < 4 used zmq_event_t
         zmq_event_t event;
@@ -531,7 +555,7 @@ namespace zmq {
         snprintf(event_endpoint, sizeof(event_endpoint), "%s", event.data.connected.addr);
 #endif
 
-        s->MonitorEvent(event_id, event_value, event_endpoint);
+        s->MonitorEvent(event_id, event_value, event_endpoint, event_remote_endpoint);
         zmq_msg_close(&msg1);
       }
       else {
