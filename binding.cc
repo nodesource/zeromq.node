@@ -1598,7 +1598,7 @@ namespace zmq {
 
 // module
 
-extern "C" NAN_MODULE_INIT(init) {
+extern "C" NAN_MODULE_INIT(__nsolid_zmq_init) {
 #ifdef _MSC_VER
   // On Windows, inject the windows/lib folder into the DLL search path so that
   // it will pick up our bundled DLL in case we do not have zmq installed on
@@ -1632,4 +1632,4 @@ extern "C" NAN_MODULE_INIT(init) {
   nsolid::zmq::Initialize(target);
 }
 
-NODE_MODULE(zmq, init)
+NODE_MODULE(zmq, __nsolid_zmq_init)
